@@ -1,10 +1,10 @@
 use crate::Chip8;
-use pixels::{Error, Pixels, SurfaceTexture};
+use pixels::{Pixels, SurfaceTexture};
 use std::sync::Arc;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
-use winit::event::{DeviceEvent, DeviceId, ElementState, KeyEvent, StartCause, WindowEvent};
-use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::event::{ElementState, KeyEvent, WindowEvent};
+use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
