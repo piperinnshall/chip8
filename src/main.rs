@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+use std::sync::Arc;
 
 use log::error;
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -14,15 +15,15 @@ const HEIGHT: u32 = 240;
 
 fn main() {
     env_logger::init();
-
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
-    let mut app = App { window: None };
-    event_loop.run_app(&mut app).unwrap();
+    event_loop.run_app(&mut App::default()).unwrap();
 }
 
+#[derive(Default)]
 struct App {
-    window: Option<Window>,
+    window: Option<Arc<Window>>,
+    pixels: Option<Pixels<'static>>,
 }
 
 impl ApplicationHandler for App {
@@ -32,7 +33,23 @@ impl ApplicationHandler for App {
             .with_title("Chip8")
             .with_inner_size(size)
             .with_min_inner_size(size);
-        self.window = Some(event_loop.create_window(window_attributes).unwrap());
+        let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+        let (window_width, window_height) = window.inner_size().into();
+        let surface_texture = SurfaceTexture::new(window_width, window_height, window.clone());
+        self.window = Some(window.clone());
+        self.pixels = {
+            match Pixels::new(WIDTH, HEIGHT, surface_texture) {
+                Ok(pixels) => {
+                    window.request_redraw();
+                    Some(pixels)
+                }
+                Err(err) => {
+                    log_error("Pixels::new", err);
+                    event_loop.exit();
+                    None
+                }
+            }
+        };
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
@@ -59,9 +76,7 @@ impl ApplicationHandler for App {
                     state: ElementState::Pressed,
                     repeat: false,
                     ..
-                } => {
-                    println!("The 'W' key was pressed");
-                }
+                } => println!("The 'W' key was pressed"),
                 _ => (),
             },
             _ => (),
