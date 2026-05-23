@@ -1,3 +1,4 @@
+use crate::Chip8;
 use pixels::{Error, Pixels, SurfaceTexture};
 use std::sync::Arc;
 use winit::application::ApplicationHandler;
@@ -11,6 +12,7 @@ use winit::window::{Window, WindowId};
 pub struct App {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
+    chip8: Chip8,
 }
 
 impl ApplicationHandler for App {
@@ -23,29 +25,43 @@ impl ApplicationHandler for App {
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
         let (window_width, window_height) = window.inner_size().into();
         let surface_texture = SurfaceTexture::new(window_width, window_height, window.clone());
-        self.window = Some(window.clone());
-        self.pixels = {
-            match Pixels::new(crate::WIDTH, crate::HEIGHT, surface_texture) {
-                Ok(pixels) => {
-                    window.request_redraw();
-                    Some(pixels)
-                }
-                Err(err) => {
-                    crate::log_error("Pixels::new", err);
-                    event_loop.exit();
-                    None
-                }
-            }
-        };
-    }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
-        match event {
-            WindowEvent::CloseRequested => {
-                println!("The close button was pressed; stopping");
+        match Pixels::new(crate::WIDTH, crate::HEIGHT, surface_texture) {
+            Ok(pixels) => {
+                // window.request_redraw();
+                self.window = Some(window.clone());
+                self.pixels = Some(pixels);
+            }
+            Err(err) => {
+                crate::log_error("Pixels::new", err);
                 event_loop.exit();
             }
+        }
+    }
+
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, _: WindowId, event: WindowEvent) {
+        match event {
+            WindowEvent::CloseRequested => {
+                event_loop.exit();
+            }
+            WindowEvent::Resized(size) => {
+                if let Err(err) = self
+                    .pixels
+                    .as_mut()
+                    .unwrap()
+                    .resize_surface(size.width, size.height)
+                {
+                    crate::log_error("pixels.resize_surface", err);
+                    event_loop.exit()
+                }
+            }
             WindowEvent::RedrawRequested => {
+                self.chip8.update();
+                self.chip8.draw(self.pixels.as_mut().unwrap().frame_mut());
+                if let Err(err) = self.pixels.as_ref().unwrap().render() {
+                    crate::log_error("pixels.render", err);
+                    event_loop.exit();
+                }
                 self.window.as_ref().unwrap().request_redraw();
             }
             WindowEvent::KeyboardInput { event, .. } => match event {
@@ -55,7 +71,6 @@ impl ApplicationHandler for App {
                     repeat: false,
                     ..
                 } => {
-                    println!("The 'Escape' key was pressed; stopping");
                     event_loop.exit();
                 }
                 KeyEvent {
