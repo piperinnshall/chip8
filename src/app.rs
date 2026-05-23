@@ -28,7 +28,6 @@ impl ApplicationHandler for App {
 
         match Pixels::new(crate::WIDTH, crate::HEIGHT, surface_texture) {
             Ok(pixels) => {
-                // window.request_redraw();
                 self.window = Some(window.clone());
                 self.pixels = Some(pixels);
             }
@@ -70,9 +69,7 @@ impl ApplicationHandler for App {
                     state: ElementState::Pressed,
                     repeat: false,
                     ..
-                } => {
-                    event_loop.exit();
-                }
+                } => event_loop.exit(),
                 KeyEvent {
                     physical_key: PhysicalKey::Code(KeyCode::KeyW),
                     state: ElementState::Pressed,
