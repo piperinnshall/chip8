@@ -1,12 +1,23 @@
-use crate::Chip8;
+use crate::chip8::Chip8;
 use pixels::{Pixels, SurfaceTexture};
 use std::sync::Arc;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::{ElementState, KeyEvent, WindowEvent};
-use winit::event_loop::ActiveEventLoop;
+use winit::event_loop::{ActiveEventLoop,ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
+
+pub fn init(chip8: Chip8) {
+    let app = &mut App {
+        chip8,
+        ..Default::default()
+    };
+
+    let event_loop = EventLoop::new().unwrap();
+    event_loop.set_control_flow(ControlFlow::Poll);
+    event_loop.run_app(app).unwrap();
+}
 
 #[derive(Default)]
 pub struct App {
