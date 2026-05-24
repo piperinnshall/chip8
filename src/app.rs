@@ -1,29 +1,43 @@
 use crate::chip8::Chip8;
 use pixels::{Pixels, SurfaceTexture};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
-use winit::event::{ElementState, KeyEvent, WindowEvent};
-use winit::event_loop::{ActiveEventLoop,ControlFlow, EventLoop};
+use winit::event::{ElementState, KeyEvent, StartCause, WindowEvent};
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
+
+const FPS: u64 = 1;
+const FRAME_TIME: Duration = Duration::from_nanos(1_000_000_000 / FPS);
 
 pub fn init(chip8: Chip8) {
     let app = &mut App {
         chip8,
         ..Default::default()
     };
-
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
     event_loop.run_app(app).unwrap();
 }
 
-#[derive(Default)]
-pub struct App {
+struct App {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
+    render_target: Instant,
     chip8: Chip8,
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self {
+            window: None,
+            pixels: None,
+            render_target: Instant::now(),
+            chip8: Chip8::default(),
+        }
+    }
 }
 
 impl ApplicationHandler for App {
@@ -36,7 +50,6 @@ impl ApplicationHandler for App {
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
         let (window_width, window_height) = window.inner_size().into();
         let surface_texture = SurfaceTexture::new(window_width, window_height, window.clone());
-
         match Pixels::new(crate::WIDTH, crate::HEIGHT, surface_texture) {
             Ok(pixels) => {
                 self.window = Some(window.clone());
@@ -72,7 +85,11 @@ impl ApplicationHandler for App {
                     crate::log_error("pixels.render", err);
                     event_loop.exit();
                 }
-                self.window.as_ref().unwrap().request_redraw();
+                let now = Instant::now();
+                if self.render_target <= now {
+                    self.render_target = now + FRAME_TIME;
+                    self.window.as_ref().map(|window| window.request_redraw());
+                }
             }
             WindowEvent::KeyboardInput { event, .. } => match event {
                 KeyEvent {
@@ -82,14 +99,53 @@ impl ApplicationHandler for App {
                     ..
                 } => event_loop.exit(),
                 KeyEvent {
-                    physical_key: PhysicalKey::Code(KeyCode::KeyW),
-                    state: ElementState::Pressed,
+                    physical_key: PhysicalKey::Code(keycode),
+                    state,
                     repeat: false,
                     ..
-                } => println!("The 'W' key was pressed"),
+                } => match scancode(keycode) {
+                    Some(key) => match state {
+                        ElementState::Pressed => self.chip8.key_down(key),
+                        ElementState::Released => self.chip8.key_up(key),
+                    },
+                    _ => (),
+                },
                 _ => (),
             },
             _ => (),
         }
+    }
+
+    fn new_events(&mut self, _: &ActiveEventLoop, _: StartCause) {
+        if self.render_target <= Instant::now() {
+            self.render_target += FRAME_TIME;
+            self.window.as_ref().map(|window| window.request_redraw());
+        }
+    }
+
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        event_loop.set_control_flow(ControlFlow::WaitUntil(self.render_target));
+    }
+}
+
+fn scancode(keycode: KeyCode) -> Option<usize> {
+    match keycode {
+        KeyCode::Digit1 => Some(0),
+        KeyCode::Digit2 => Some(1),
+        KeyCode::Digit3 => Some(2),
+        KeyCode::Digit4 => Some(3),
+        KeyCode::KeyQ => Some(4),
+        KeyCode::KeyW => Some(5),
+        KeyCode::KeyE => Some(6),
+        KeyCode::KeyR => Some(7),
+        KeyCode::KeyA => Some(8),
+        KeyCode::KeyS => Some(9),
+        KeyCode::KeyD => Some(10),
+        KeyCode::KeyF => Some(11),
+        KeyCode::KeyZ => Some(12),
+        KeyCode::KeyX => Some(13),
+        KeyCode::KeyC => Some(14),
+        KeyCode::KeyV => Some(15),
+        _ => None,
     }
 }
