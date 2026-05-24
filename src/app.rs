@@ -1,5 +1,6 @@
 use crate::chip8::Chip8;
 use pixels::{Pixels, SurfaceTexture};
+use std::cmp;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use winit::application::ApplicationHandler;
@@ -10,7 +11,9 @@ use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
 const FPS: u64 = 1;
+const UPS: u64 = 4;
 const FRAME_TIME: Duration = Duration::from_nanos(1_000_000_000 / FPS);
+const UPDATE_TIME: Duration = Duration::from_nanos(1_000_000_000 / UPS);
 
 pub fn init(chip8: Chip8) {
     let app = &mut App {
@@ -26,6 +29,7 @@ struct App {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
     render_target: Instant,
+    update_target: Instant,
     chip8: Chip8,
 }
 
@@ -35,6 +39,7 @@ impl Default for App {
             window: None,
             pixels: None,
             render_target: Instant::now(),
+            update_target: Instant::now(),
             chip8: Chip8::default(),
         }
     }
@@ -79,15 +84,21 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::RedrawRequested => {
-                self.chip8.update();
-                self.chip8.draw(self.pixels.as_mut().unwrap().frame_mut());
-                if let Err(err) = self.pixels.as_ref().unwrap().render() {
-                    crate::log_error("pixels.render", err);
-                    event_loop.exit();
-                }
                 let now = Instant::now();
+                if self.update_target <= now {
+                    println!("Frame1");
+                    self.update_target += UPDATE_TIME;
+                    self.window.as_ref().map(|window| window.request_redraw());
+                }
                 if self.render_target <= now {
-                    self.render_target = now + FRAME_TIME;
+                    self.chip8.update();
+                    self.chip8.draw(self.pixels.as_mut().unwrap().frame_mut());
+                    if let Err(err) = self.pixels.as_ref().unwrap().render() {
+                        crate::log_error("pixels.render", err);
+                        event_loop.exit();
+                    }
+                    println!("Frame2");
+                    self.render_target += FRAME_TIME;
                     self.window.as_ref().map(|window| window.request_redraw());
                 }
             }
@@ -117,14 +128,16 @@ impl ApplicationHandler for App {
     }
 
     fn new_events(&mut self, _: &ActiveEventLoop, _: StartCause) {
-        if self.render_target <= Instant::now() {
-            self.render_target += FRAME_TIME;
+        if self.render_target <= Instant::now() || self.update_target <= Instant::now() {
             self.window.as_ref().map(|window| window.request_redraw());
         }
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        event_loop.set_control_flow(ControlFlow::WaitUntil(self.render_target));
+        event_loop.set_control_flow(ControlFlow::WaitUntil(cmp::min(
+            self.render_target,
+            self.update_target,
+        )));
     }
 }
 
