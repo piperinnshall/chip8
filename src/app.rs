@@ -18,6 +18,7 @@ const UPDATE_TIME: Duration = Duration::from_nanos(1_000_000_000 / UPS);
 pub fn init(chip8: Chip8) {
     let app = &mut App {
         chip8,
+        print_check: false,
         ..Default::default()
     };
     let event_loop = EventLoop::new().unwrap();
@@ -31,6 +32,7 @@ struct App {
     update_target: Instant,
     render_target: Instant,
     check: Instant,
+    print_check: bool,
     frame: i32,
     update: i32,
     chip8: Chip8,
@@ -44,6 +46,7 @@ impl Default for App {
             update_target: Instant::now(),
             render_target: Instant::now(),
             check: Instant::now(),
+            print_check: false,
             frame: 0, 
             update: 0,
             chip8: Chip8::default(),
@@ -93,12 +96,12 @@ impl ApplicationHandler for App {
                 let now = Instant::now();
                 if self.update_target <= now {
                     self.update += 1;
+                    self.chip8.fetch_decode_execute();
                     self.update_target += UPDATE_TIME;
                     self.window.as_ref().map(|window| window.request_redraw());
                 }
                 if self.render_target <= now {
                     self.frame += 1;
-                    self.chip8.update();
                     self.chip8.draw(self.pixels.as_mut().unwrap().frame_mut());
                     if let Err(err) = self.pixels.as_ref().unwrap().render() {
                         crate::log_error("pixels.render", err);
@@ -108,7 +111,9 @@ impl ApplicationHandler for App {
                     self.window.as_ref().map(|window| window.request_redraw());
                 }
                 if now - self.check >= Duration::from_secs(1) {
-                    println!("UPS: {:?}, FPS: {:?}", self.update, self.frame);
+                    if self.print_check {
+                        println!("UPS: {:?}, FPS: {:?}", self.update, self.frame);
+                    }
                     self.update = 0;
                     self.frame = 0;
                     self.check = now;
