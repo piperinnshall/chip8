@@ -1,4 +1,4 @@
-use crate::chip8::Chip8;
+use crate::chip8::{self, Chip8};
 use pixels::{Pixels, SurfaceTexture};
 use std::cmp;
 use std::sync::Arc;
@@ -10,8 +10,8 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
-const FPS: u64 = 1;
-const UPS: u64 = 4;
+const FPS: u64 = 60;
+const UPS: u64 = 700;
 const FRAME_TIME: Duration = Duration::from_nanos(1_000_000_000 / FPS);
 const UPDATE_TIME: Duration = Duration::from_nanos(1_000_000_000 / UPS);
 
@@ -28,8 +28,11 @@ pub fn init(chip8: Chip8) {
 struct App {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
-    render_target: Instant,
     update_target: Instant,
+    render_target: Instant,
+    check: Instant,
+    frame: i32,
+    update: i32,
     chip8: Chip8,
 }
 
@@ -38,8 +41,11 @@ impl Default for App {
         Self {
             window: None,
             pixels: None,
-            render_target: Instant::now(),
             update_target: Instant::now(),
+            render_target: Instant::now(),
+            check: Instant::now(),
+            frame: 0, 
+            update: 0,
             chip8: Chip8::default(),
         }
     }
@@ -47,7 +53,7 @@ impl Default for App {
 
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let size = LogicalSize::new(crate::WIDTH as f64, crate::HEIGHT as f64);
+        let size = LogicalSize::new(chip8::WIDTH as f64, chip8::HEIGHT as f64);
         let window_attributes = Window::default_attributes()
             .with_title("Chip8")
             .with_inner_size(size)
@@ -55,7 +61,7 @@ impl ApplicationHandler for App {
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
         let (window_width, window_height) = window.inner_size().into();
         let surface_texture = SurfaceTexture::new(window_width, window_height, window.clone());
-        match Pixels::new(crate::WIDTH, crate::HEIGHT, surface_texture) {
+        match Pixels::new(chip8::WIDTH as u32, chip8::HEIGHT as u32, surface_texture) {
             Ok(pixels) => {
                 self.window = Some(window.clone());
                 self.pixels = Some(pixels);
@@ -86,20 +92,26 @@ impl ApplicationHandler for App {
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
                 if self.update_target <= now {
-                    println!("Frame1");
+                    self.update += 1;
                     self.update_target += UPDATE_TIME;
                     self.window.as_ref().map(|window| window.request_redraw());
                 }
                 if self.render_target <= now {
+                    self.frame += 1;
                     self.chip8.update();
                     self.chip8.draw(self.pixels.as_mut().unwrap().frame_mut());
                     if let Err(err) = self.pixels.as_ref().unwrap().render() {
                         crate::log_error("pixels.render", err);
                         event_loop.exit();
                     }
-                    println!("Frame2");
                     self.render_target += FRAME_TIME;
                     self.window.as_ref().map(|window| window.request_redraw());
+                }
+                if now - self.check >= Duration::from_secs(1) {
+                    println!("UPS: {:?}, FPS: {:?}", self.update, self.frame);
+                    self.update = 0;
+                    self.frame = 0;
+                    self.check = now;
                 }
             }
             WindowEvent::KeyboardInput { event, .. } => match event {
