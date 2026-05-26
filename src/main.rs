@@ -53,6 +53,7 @@ fn main() {
     env_logger::init();
     let mut chip8 = chip8::Chip8::default();
     chip8.load(&TEST_ROM);
+    chip8.ambiguous(false, false);
     app::init(chip8);
 }
 

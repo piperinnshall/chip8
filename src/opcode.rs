@@ -58,8 +58,8 @@ impl Opcode {
                 0x7 => Self::_8XY7(x, y),
                 0x6 => Self::_8XY6(x, y),
                 0xE => Self::_8XYE(x, y),
-            _ => Self::NONE,
-            }
+                _ => Self::NONE,
+            },
             0xA => Self::_ANNN(nnn),
             0xB => Self::_BNNN(x, nnn),
             0xD => Self::_DXYN(x, y, n),
