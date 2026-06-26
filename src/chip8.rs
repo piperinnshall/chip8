@@ -154,18 +154,17 @@ impl Chip8 {
             Opcode::_DXYN(x, y, n) => {
                 let vx = self.v(x) & (WIDTH - 1);
                 let vy = self.v(y) & (HEIGHT - 1);
-                *self.v_mut(0xF) = 0x0;
+                *self.v_mut(0xF) = 0;
                 for i in 0..n {
                     let byte = self.mem(self.i + i as u16);
-                    let sprite_row = BitVec::from_bytes(&[byte]);
-                    for bit in 0x0..0x8 {
-                        let sprite_bit = sprite_row[bit];
-                        if sprite_bit {
+                    for bit in 0..8 {
+                        let sprite_bit = (byte >> (7 - bit)) & 1;
+                        if sprite_bit == 1 {
                             let x = (vx + bit as u8) % WIDTH;
                             let y = (vy + i) % HEIGHT;
                             let idx = x as usize + WIDTH as usize * y as usize;
                             if self.display.get(idx).unwrap() {
-                                *self.v_mut(0xF) = 0x1;
+                                *self.v_mut(0xF) = 1;
                             }
                             *self.display.get_mut(idx).unwrap() ^= true;
                         }
