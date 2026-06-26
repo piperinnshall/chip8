@@ -25,6 +25,9 @@ pub enum Opcode {
     _DXYN(u8, u8, u8),
     _EX9E(u8),
     _EXA1(u8),
+    _FX07(u8),
+    _FX15(u8),
+    _FX18(u8),
     NONE,
 }
 
@@ -70,6 +73,12 @@ impl Opcode {
             0xE => match n {
                 0xE => Self::_EX9E(x),
                 0x1 => Self::_EXA1(x),
+                _ => Self::NONE,
+            }
+            0xF => match n {
+                0x7 => Self::_FX07(x),
+                0x5 => Self::_FX15(x),
+                0x8 => Self::_FX18(x),
                 _ => Self::NONE,
             }
             _ => Self::NONE,
