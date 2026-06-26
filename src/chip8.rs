@@ -1,14 +1,12 @@
 use crate::opcode::Opcode;
 use bit_vec::BitVec;
 use rand::prelude::*;
-use std::ops::RangeInclusive;
 
 pub const WIDTH: u8 = 64;
 pub const HEIGHT: u8 = 32;
 const DISPLAY_SIZE: usize = WIDTH as usize * HEIGHT as usize;
 const MEMORY_START: usize = 0x200;
 const MEMORY_SIZE: usize = 0x1000;
-const FONT_RANGE: RangeInclusive<usize> = 0x050..=0x09F;
 const FONT: [u8; 80] = [
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -173,6 +171,16 @@ impl Chip8 {
                     }
                 }
             }
+            Opcode::_EX9E(x) => {
+                if self.keypad[self.v(x).into()] {
+                    self.pc += 2;
+                }
+            }
+            Opcode::_EXA1(x) => {
+                if !self.keypad[self.v(x).into()] {
+                    self.pc += 2;
+                }
+            }
             Opcode::NONE => (),
         }
     }
@@ -193,7 +201,7 @@ impl Chip8 {
 impl Default for Chip8 {
     fn default() -> Self {
         let mut memory = [0; MEMORY_SIZE];
-        memory[FONT_RANGE].copy_from_slice(&FONT);
+        memory[0x050..=0x09F].copy_from_slice(&FONT);
         Self {
             memory,
             display: BitVec::from_elem(DISPLAY_SIZE, false),

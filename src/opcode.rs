@@ -23,6 +23,8 @@ pub enum Opcode {
     _BNNN(u8, u16),
     _CXNN(u8, u8),
     _DXYN(u8, u8, u8),
+    _EX9E(u8),
+    _EXA1(u8),
     NONE,
 }
 
@@ -65,6 +67,11 @@ impl Opcode {
             0xB => Self::_BNNN(x, nnn),
             0xC => Self::_CXNN(x, nn),
             0xD => Self::_DXYN(x, y, n),
+            0xE => match n {
+                0xE => Self::_EX9E(x),
+                0x1 => Self::_EXA1(x),
+                _ => Self::NONE,
+            }
             _ => Self::NONE,
         }
     }
