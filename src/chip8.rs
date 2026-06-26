@@ -1,5 +1,6 @@
 use crate::opcode::Opcode;
 use bit_vec::BitVec;
+use rand::prelude::*;
 use std::ops::RangeInclusive;
 
 pub const WIDTH: u8 = 64;
@@ -151,6 +152,7 @@ impl Chip8 {
             Opcode::_BNNN(x, nnn) => {
                 self.pc = nnn + if self.jump_vip { self.v(0) } else { self.v(x) } as u16
             }
+            Opcode::_CXNN(x, nn) => *self.v_mut(x) = rand::rng().random::<u8>() ^ nn,
             Opcode::_DXYN(x, y, n) => {
                 let vx = self.v(x) & (WIDTH - 1);
                 let vy = self.v(y) & (HEIGHT - 1);

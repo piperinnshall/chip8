@@ -21,6 +21,7 @@ pub enum Opcode {
     _8XYE(u8, u8),
     _ANNN(u16),
     _BNNN(u8, u16),
+    _CXNN(u8, u8),
     _DXYN(u8, u8, u8),
     NONE,
 }
@@ -62,6 +63,7 @@ impl Opcode {
             },
             0xA => Self::_ANNN(nnn),
             0xB => Self::_BNNN(x, nnn),
+            0xC => Self::_CXNN(x, nn),
             0xD => Self::_DXYN(x, y, n),
             _ => Self::NONE,
         }
