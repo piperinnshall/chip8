@@ -184,6 +184,7 @@ impl Chip8 {
             Opcode::_FX07(x) => *self.v_mut(x) = self.delay_timer,
             Opcode::_FX15(x) => self.delay_timer = self.v(x),
             Opcode::_FX18(x) => self.sound_timer = self.v(x),
+            Opcode::_FX1E(x) => self.i = self.i.wrapping_add(self.v(x) as u16),
             Opcode::NONE => (),
         }
     }
