@@ -185,6 +185,13 @@ impl Chip8 {
             Opcode::_FX15(x) => self.delay_timer = self.v(x),
             Opcode::_FX18(x) => self.sound_timer = self.v(x),
             Opcode::_FX1E(x) => self.i = self.i.wrapping_add(self.v(x) as u16),
+            Opcode::_FX0A(x) => {
+                if let Some((i, _)) = self.keypad.iter().enumerate().find(|(_, k)| *k) {
+                    *self.v_mut(x) = i as u8;
+                } else {
+                    self.pc -= 2;
+                }
+            }
             Opcode::NONE => (),
         }
     }
