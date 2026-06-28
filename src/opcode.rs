@@ -30,6 +30,8 @@ pub enum Opcode {
     _FX18(u8),
     _FX1E(u8),
     _FX0A(u8),
+    _FX29(u8),
+    _FX33(u8),
     NONE,
 }
 
@@ -83,6 +85,8 @@ impl Opcode {
                 0x8 => Self::_FX18(x),
                 0xE => Self::_FX1E(x),
                 0xA => Self::_FX0A(x),
+                0x9 => Self::_FX29(x),
+                0x3 => Self::_FX33(x),
                 _ => Self::NONE,
             }
             _ => Self::NONE,

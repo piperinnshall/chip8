@@ -192,6 +192,7 @@ impl Chip8 {
                     self.pc -= 2;
                 }
             }
+            Opcode::_FX29(x) => self.i = 0x050 + (self.v(x) as u16) * 5,
             Opcode::NONE => (),
         }
     }
