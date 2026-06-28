@@ -2,6 +2,7 @@ mod app;
 mod chip8;
 mod opcode;
 
+use app::App;
 use chip8::Chip8;
 use log::error;
 use std::env;
@@ -20,7 +21,10 @@ fn main() -> io::Result<()> {
     chip8.load(&buffer);
     chip8.ambiguous(false, false);
 
-    app::init(chip8);
+    let mut app = App::new(chip8);
+    app.debug(false);
+    app.run();
+
     Ok(())
 }
 

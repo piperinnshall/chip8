@@ -15,27 +15,35 @@ const UPS: u64 = 700;
 const FRAME_TIME: Duration = Duration::from_nanos(1_000_000_000 / FPS);
 const UPDATE_TIME: Duration = Duration::from_nanos(1_000_000_000 / UPS);
 
-pub fn init(chip8: Chip8) {
-    let app = &mut App {
-        chip8,
-        print_check: false,
-        ..Default::default()
-    };
-    let event_loop = EventLoop::new().unwrap();
-    event_loop.set_control_flow(ControlFlow::Poll);
-    event_loop.run_app(app).unwrap();
-}
-
-struct App {
+pub struct App {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
     update_target: Instant,
     render_target: Instant,
     check: Instant,
-    print_check: bool,
+    debug: bool,
     frame: i32,
     update: i32,
     chip8: Chip8,
+}
+
+impl App {
+    pub fn new(chip8: Chip8) -> Self {
+        Self {
+            chip8,
+            ..Default::default()
+        }
+    }
+
+    pub fn debug(&mut self, debug: bool) {
+        self.debug = debug;
+    }
+
+    pub fn run(&mut self) {
+        let event_loop = EventLoop::new().unwrap();
+        event_loop.set_control_flow(ControlFlow::Poll);
+        event_loop.run_app(self).unwrap();
+    }
 }
 
 impl Default for App {
@@ -46,8 +54,8 @@ impl Default for App {
             update_target: Instant::now(),
             render_target: Instant::now(),
             check: Instant::now(),
-            print_check: false,
-            frame: 0, 
+            debug: false,
+            frame: 0,
             update: 0,
             chip8: Chip8::default(),
         }
@@ -111,7 +119,7 @@ impl ApplicationHandler for App {
                     self.window.as_ref().map(|window| window.request_redraw());
                 }
                 if now - self.check >= Duration::from_secs(1) {
-                    if self.print_check {
+                    if self.debug {
                         println!("UPS: {:?}, FPS: {:?}", self.update, self.frame);
                     }
                     self.update = 0;
