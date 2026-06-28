@@ -193,12 +193,22 @@ impl Chip8 {
                 }
             }
             Opcode::_FX29(x) => self.i = 0x050 + (self.v(x) as u16) * 5,
+            Opcode::_FX33(x) => {
+                let vx = self.v(x);
+                *self.mem_mut(self.i) = vx / 100;
+                *self.mem_mut(self.i + 1) = vx / 10 % 10;
+                *self.mem_mut(self.i + 2) = vx % 10;
+            }
             Opcode::NONE => (),
         }
     }
 
     fn mem(&self, addr: u16) -> u8 {
         self.memory[addr as usize]
+    }
+
+    fn mem_mut(&mut self, addr: u16) -> &mut u8 {
+        &mut self.memory[addr as usize]
     }
 
     fn v(&self, addr: u8) -> u8 {
