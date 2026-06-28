@@ -5,6 +5,8 @@ use rand::prelude::*;
 pub const WIDTH: u8 = 64;
 pub const HEIGHT: u8 = 32;
 const DISPLAY_SIZE: usize = WIDTH as usize * HEIGHT as usize;
+const FONT_START: usize = 0x050;
+const FONT_END: usize = 0x09F;
 const MEMORY_START: usize = 0x200;
 const MEMORY_SIZE: usize = 0x1000;
 const FONT: [u8; 80] = [
@@ -41,8 +43,14 @@ pub struct Chip8 {
 }
 
 impl Chip8 {
-    pub fn load(&mut self, rom: &[u8]) {
-        self.memory[MEMORY_START..MEMORY_START + rom.len()].copy_from_slice(rom);
+    pub fn new(rom: &[u8]) -> Self {
+        let mut memory = [0; MEMORY_SIZE];
+        memory[FONT_START..=FONT_END].copy_from_slice(&FONT);
+        memory[MEMORY_START..MEMORY_START + rom.len()].copy_from_slice(rom);
+        Self {
+            memory,
+            ..Default::default()
+        }
     }
 
     pub fn ambiguous(&mut self, shift_vip: bool, jump_vip: bool) {
@@ -222,10 +230,8 @@ impl Chip8 {
 
 impl Default for Chip8 {
     fn default() -> Self {
-        let mut memory = [0; MEMORY_SIZE];
-        memory[0x050..=0x09F].copy_from_slice(&FONT);
         Self {
-            memory,
+            memory: [0; MEMORY_SIZE],
             display: BitVec::from_elem(DISPLAY_SIZE, false),
             keypad: BitVec::from_elem(16, false),
             pc: MEMORY_START as u16,

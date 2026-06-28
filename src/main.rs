@@ -14,11 +14,10 @@ fn main() -> io::Result<()> {
 
     let path = env::args().nth(1).expect("expected: <program> <ROM>");
     let mut file = File::open(path)?;
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer)?;
+    let mut rom = Vec::new();
+    file.read_to_end(&mut rom)?;
 
-    let mut chip8 = Chip8::default();
-    chip8.load(&buffer);
+    let mut chip8 = Chip8::new(&rom);
     chip8.ambiguous(false, false);
 
     let mut app = App::new(chip8);
