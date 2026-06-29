@@ -96,7 +96,8 @@ impl ApplicationHandler for App {
         let (window_width, window_height) = window.inner_size().into();
         let surface_texture = SurfaceTexture::new(window_width, window_height, window.clone());
         match Pixels::new(chip8::WIDTH as u32, chip8::HEIGHT as u32, surface_texture) {
-            Ok(pixels) => {
+            Ok(mut pixels) => {
+                pixels.enable_vsync(false);
                 self.window = Some(window.clone());
                 self.pixels = Some(pixels);
             }
@@ -127,17 +128,13 @@ impl ApplicationHandler for App {
                 let now = Instant::now();
                 if self.update_target <= now {
                     self.update += 1;
-
-                    // let start = Instant::now();
-                    // self.chip8.fetch_decode_execute();
-                    // println!("Fetch, Decode, Execute{:?}", start.elapsed());
-
+                    self.chip8.fetch_decode_execute();
                     self.update_target += UPDATE_TIME;
                     self.window.as_ref().map(|window| window.request_redraw());
                 }
                 if self.render_target <= now {
                     self.frame += 1;
-                    // self.chip8.draw(self.pixels.as_mut().unwrap().frame_mut());
+                    self.chip8.draw(self.pixels.as_mut().unwrap().frame_mut());
                     if let Err(err) = self.pixels.as_ref().unwrap().render() {
                         crate::log_error("pixels.render", err);
                         event_loop.exit();

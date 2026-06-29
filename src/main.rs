@@ -10,7 +10,7 @@ fn main() -> std::io::Result<()> {
     let path = std::env::args().nth(1).expect("expected: <program> <ROM>");
     let rom = std::fs::read(path)?;
     let chip8 = Chip8::new(&rom).with_mode(false, false);
-    App::new(chip8).with_debug(true).run();
+    App::new(chip8).with_debug(false).run();
     Ok(())
 }
 
