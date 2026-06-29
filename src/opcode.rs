@@ -32,6 +32,8 @@ pub enum Opcode {
     _FX0A(u8),
     _FX29(u8),
     _FX33(u8),
+    _FX55(u8),
+    _FX65(u8),
     NONE,
 }
 
@@ -79,14 +81,16 @@ impl Opcode {
                 0x1 => Self::_EXA1(x),
                 _ => Self::NONE,
             }
-            0xF => match n {
-                0x7 => Self::_FX07(x),
-                0x5 => Self::_FX15(x),
-                0x8 => Self::_FX18(x),
-                0xE => Self::_FX1E(x),
-                0xA => Self::_FX0A(x),
-                0x9 => Self::_FX29(x),
-                0x3 => Self::_FX33(x),
+            0xF => match nn {
+                0x07 => Self::_FX07(x),
+                0x15 => Self::_FX15(x),
+                0x18 => Self::_FX18(x),
+                0x1E => Self::_FX1E(x),
+                0x0A => Self::_FX0A(x),
+                0x29 => Self::_FX29(x),
+                0x33 => Self::_FX33(x),
+                0x55 => Self::_FX55(x),
+                0x65 => Self::_FX65(x),
                 _ => Self::NONE,
             }
             _ => Self::NONE,

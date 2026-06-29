@@ -53,19 +53,20 @@ impl Chip8 {
         }
     }
 
-    pub fn ambiguous(&mut self, shift_vip: bool, jump_vip: bool) {
+    pub fn with_mode(mut self, shift_vip: bool, jump_vip: bool) -> Self {
         self.shift_vip = shift_vip;
         self.jump_vip = jump_vip;
+        self
     }
 
     pub fn key_down(&mut self, scancode: usize) {
         self.keypad.set(scancode, true);
-        println!("{}: {}", scancode, self.keypad[scancode])
+        // println!("{}: {}", scancode, self.keypad[scancode])
     }
 
     pub fn key_up(&mut self, scancode: usize) {
         self.keypad.set(scancode, false);
-        println!("{}: {}", scancode, self.keypad[scancode])
+        // println!("{}: {}", scancode, self.keypad[scancode])
     }
 
     pub fn draw(&mut self, frame: &mut [u8]) {
@@ -133,12 +134,12 @@ impl Chip8 {
             Opcode::_8XY5(x, y) => {
                 let (res, borrow) = self.v(x).overflowing_sub(self.v(y));
                 *self.v_mut(x) = res;
-                *self.v_mut(0xF) = (!borrow) as u8;
+                *self.v_mut(0xF) = !borrow as u8;
             }
             Opcode::_8XY7(x, y) => {
                 let (res, borrow) = self.v(y).overflowing_sub(self.v(x));
                 *self.v_mut(x) = res;
-                *self.v_mut(0xF) = (!borrow) as u8;
+                *self.v_mut(0xF) = !borrow as u8;
             }
             Opcode::_8XY6(x, y) => {
                 if self.shift_vip {
@@ -206,6 +207,16 @@ impl Chip8 {
                 *self.mem_mut(self.i) = vx / 100;
                 *self.mem_mut(self.i + 1) = vx / 10 % 10;
                 *self.mem_mut(self.i + 2) = vx % 10;
+            }
+            Opcode::_FX55(x) => {
+                for i in 0..=x {
+                    *self.mem_mut(self.i + i as u16) = self.v(i);
+                }
+            }
+            Opcode::_FX65(x) => {
+                for i in 0..=x {
+                    *self.v_mut(i) = self.mem(self.i + i as u16);
+                }
             }
             Opcode::NONE => (),
         }

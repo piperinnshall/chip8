@@ -35,14 +35,37 @@ impl App {
         }
     }
 
-    pub fn debug(&mut self, debug: bool) {
+    pub fn with_debug(mut self, debug: bool) -> Self {
         self.debug = debug;
+        self
     }
 
     pub fn run(&mut self) {
         let event_loop = EventLoop::new().unwrap();
         event_loop.set_control_flow(ControlFlow::Poll);
         event_loop.run_app(self).unwrap();
+    }
+
+    fn scancode(keycode: KeyCode) -> Option<usize> {
+        match keycode {
+            KeyCode::Digit1 => Some(0),
+            KeyCode::Digit2 => Some(1),
+            KeyCode::Digit3 => Some(2),
+            KeyCode::Digit4 => Some(3),
+            KeyCode::KeyQ => Some(4),
+            KeyCode::KeyW => Some(5),
+            KeyCode::KeyE => Some(6),
+            KeyCode::KeyR => Some(7),
+            KeyCode::KeyA => Some(8),
+            KeyCode::KeyS => Some(9),
+            KeyCode::KeyD => Some(10),
+            KeyCode::KeyF => Some(11),
+            KeyCode::KeyZ => Some(12),
+            KeyCode::KeyX => Some(13),
+            KeyCode::KeyC => Some(14),
+            KeyCode::KeyV => Some(15),
+            _ => None,
+        }
     }
 }
 
@@ -104,13 +127,17 @@ impl ApplicationHandler for App {
                 let now = Instant::now();
                 if self.update_target <= now {
                     self.update += 1;
-                    self.chip8.fetch_decode_execute();
+
+                    // let start = Instant::now();
+                    // self.chip8.fetch_decode_execute();
+                    // println!("Fetch, Decode, Execute{:?}", start.elapsed());
+
                     self.update_target += UPDATE_TIME;
                     self.window.as_ref().map(|window| window.request_redraw());
                 }
                 if self.render_target <= now {
                     self.frame += 1;
-                    self.chip8.draw(self.pixels.as_mut().unwrap().frame_mut());
+                    // self.chip8.draw(self.pixels.as_mut().unwrap().frame_mut());
                     if let Err(err) = self.pixels.as_ref().unwrap().render() {
                         crate::log_error("pixels.render", err);
                         event_loop.exit();
@@ -139,7 +166,7 @@ impl ApplicationHandler for App {
                     state,
                     repeat: false,
                     ..
-                } => match scancode(keycode) {
+                } => match Self::scancode(keycode) {
                     Some(key) => match state {
                         ElementState::Pressed => self.chip8.key_down(key),
                         ElementState::Released => self.chip8.key_up(key),
@@ -163,27 +190,5 @@ impl ApplicationHandler for App {
             self.render_target,
             self.update_target,
         )));
-    }
-}
-
-fn scancode(keycode: KeyCode) -> Option<usize> {
-    match keycode {
-        KeyCode::Digit1 => Some(0),
-        KeyCode::Digit2 => Some(1),
-        KeyCode::Digit3 => Some(2),
-        KeyCode::Digit4 => Some(3),
-        KeyCode::KeyQ => Some(4),
-        KeyCode::KeyW => Some(5),
-        KeyCode::KeyE => Some(6),
-        KeyCode::KeyR => Some(7),
-        KeyCode::KeyA => Some(8),
-        KeyCode::KeyS => Some(9),
-        KeyCode::KeyD => Some(10),
-        KeyCode::KeyF => Some(11),
-        KeyCode::KeyZ => Some(12),
-        KeyCode::KeyX => Some(13),
-        KeyCode::KeyC => Some(14),
-        KeyCode::KeyV => Some(15),
-        _ => None,
     }
 }

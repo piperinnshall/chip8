@@ -4,30 +4,17 @@ mod opcode;
 
 use app::App;
 use chip8::Chip8;
-use log::error;
-use std::env;
-use std::fs::File;
-use std::io::{self, Read};
 
-fn main() -> io::Result<()> {
+fn main() -> std::io::Result<()> {
     env_logger::init();
-
-    let path = env::args().nth(1).expect("expected: <program> <ROM>");
-    let mut file = File::open(path)?;
-    let mut rom = Vec::new();
-    file.read_to_end(&mut rom)?;
-
-    let mut chip8 = Chip8::new(&rom);
-    chip8.ambiguous(false, false);
-
-    let mut app = App::new(chip8);
-    app.debug(false);
-    app.run();
-
+    let path = std::env::args().nth(1).expect("expected: <program> <ROM>");
+    let rom = std::fs::read(path)?;
+    let chip8 = Chip8::new(&rom).with_mode(false, false);
+    App::new(chip8).with_debug(true).run();
     Ok(())
 }
 
 pub fn log_error<E: std::error::Error + 'static>(method_name: &str, err: E) {
-    error!("{method_name}() failed: {err}");
-    error!("  Caused by: {:?}", err.source());
+    log::error!("{method_name}() failed: {err}");
+    log::error!("  Caused by: {:?}", err.source());
 }
